@@ -10,12 +10,12 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
-#include "sys/time.h"
+#include <time.h>
 
 static int64_t gettime_i64(void) {
-    struct timeval tv;
-    gettimeofday(&tv, NULL);
-    return (int64_t)tv.tv_usec + (int64_t)tv.tv_sec * 1000000LL;
+    struct timespec ts;
+    timespec_get(&ts, TIME_UTC);
+    return (ts.tv_nsec / 1000LL) + ts.tv_sec * 1000000LL;
 }
 
 #define FP_EXP (6)

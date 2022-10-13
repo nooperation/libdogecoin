@@ -27,7 +27,6 @@
 */
 
 #include <assert.h>
-#include <getopt.h>
 #ifdef HAVE_CONFIG_H
 #  include "libdogecoin-config.h"
 #endif
@@ -37,7 +36,10 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+
+#ifndef _MSC_VER
 #include <unistd.h>
+#endif
 
 #ifdef WITH_NET
 #include <event2/event.h>
@@ -51,15 +53,17 @@
 #include <dogecoin/tool.h>
 #include <dogecoin/tx.h>
 #include <dogecoin/utils.h>
+#include <dogecoin/getoptions.h>
 
-static struct option long_options[] = {
-        {"testnet", no_argument, NULL, 't'},
-        {"regtest", no_argument, NULL, 'r'},
-        {"ips", no_argument, NULL, 'i'},
-        {"debug", no_argument, NULL, 'd'},
-        {"timeout", no_argument, NULL, 's'},
-        {"maxnodes", no_argument, NULL, 'm'},
-        {NULL, 0, NULL, 0} };
+static struct program_option program_options[] = {
+    {'t', "testnet", false},
+    {'r', "regtest", false},
+    {'d', "debug", false},
+    {'s', "timeout", true},
+    {'i', "ips", true},
+    {'m', "maxnodes", true},
+    {'v', "", false},
+};
 
 static void print_version() {
     printf("Version: %s %s\n", PACKAGE_NAME, PACKAGE_VERSION);
@@ -99,7 +103,10 @@ int main(int argc, char* argv[]) {
     data = argv[argc - 1];
 
     /* get arguments */
-    while ((opt = getopt_long_only(argc, argv, "i:trds:m:", long_options, &long_index)) != -1) {
+    for (int argvIndex = 0; argvIndex < argc; ++argvIndex) {
+        char* optarg = NULL;
+        char opt = get_argument(argv, argc, &argvIndex, program_options, sizeof(program_options) / sizeof(program_options[0]), &optarg);
+
         switch (opt) {
                 case 't':
                     chain = &dogecoin_chainparams_test;

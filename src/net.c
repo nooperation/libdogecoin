@@ -26,7 +26,6 @@
  */
 
 #ifdef _WIN32
-#include <getopt.h>
 #include <winsock2.h>
 #include <ws2tcpip.h>
 #include <windows.h>
@@ -42,8 +41,11 @@
 #include <string.h>
 #include <stdlib.h>
 #include <errno.h>
-#include <pthread.h>
 #include <time.h>
+
+#ifndef _MSC_VER
+#include <pthread.h>
+#endif
 
 #include <event2/event.h>
 #include <event2/util.h>

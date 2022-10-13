@@ -1,6 +1,6 @@
 CMAKE_MINIMUM_REQUIRED(VERSION 3.13) # 3.13: concise relative source paths
 
-SET(CMAKE_C_STANDARD 99)
+SET(CMAKE_C_STANDARD 11)
 SET(CMAKE_C_STANDARD_REQUIRED TRUE)
 
 SET(LIBDOGECOIN_NAME dogecoin)
@@ -13,10 +13,7 @@ SET(WITH_NET TRUE CACHE BOOL "enable net functions")
 SET(RANDOM_DEVICE "/dev/urandom" CACHE STRING "set the device to read random data from")
 
 IF(WITH_NET)
-    FIND_LIBRARY(LIBEVENT event REQUIRED)
-    IF(WIN32)
-        FIND_LIBRARY(LIBEVENT_PTHREADS event_pthreads REQUIRED)
-    ENDIF()
+    find_package(Libevent CONFIG REQUIRED)
 ENDIF()
 
 MESSAGE(STATUS "")
@@ -57,6 +54,7 @@ INSTALL(FILES
     include/dogecoin/ctaes.h
     include/dogecoin/dogecoin.h
     include/dogecoin/ecc.h
+    include/dogecoin/getoptions.h
     include/dogecoin/hash.h
     include/dogecoin/key.h
     include/dogecoin/koinu.h
@@ -145,6 +143,7 @@ IF(USE_TESTS)
         test/buffer_tests.c
         test/cstr_tests.c
         test/ecc_tests.c
+        test/getoptions_tests.c
         test/hash_tests.c
         test/key_tests.c
         test/koinu_tests.c
@@ -161,7 +160,7 @@ IF(USE_TESTS)
         test/utils_tests.c
         test/vector_tests.c
     )
-    TARGET_LINK_LIBRARIES(tests ${LIBDOGECOIN_NAME} m)
+    TARGET_LINK_LIBRARIES(tests ${LIBDOGECOIN_NAME})
     ADD_TEST(NAME ${LIBDOGECOIN_NAME}_tests COMMAND tests)
 ENDIF()
 
@@ -176,7 +175,7 @@ IF(WITH_NET)
         src/protocol.c
     )
 
-    TARGET_LINK_LIBRARIES(${LIBDOGECOIN_NAME} ${LIBEVENT} ${LIBEVENT_PTHREADS} m)
+    TARGET_LINK_LIBRARIES(${LIBDOGECOIN_NAME} libevent::core libevent::extra)
 
     IF(USE_TESTS)
         TARGET_SOURCES(tests PRIVATE
@@ -194,14 +193,20 @@ IF(WITH_TOOLS)
     ENDIF()
 
     ADD_EXECUTABLE(such src/cli/such.c)
+    TARGET_SOURCES(such PRIVATE
+        src/cli/getoptions.c
+    )
     INSTALL(TARGETS such RUNTIME)
-    TARGET_LINK_LIBRARIES(such ${LIBDOGECOIN_NAME} m)
     TARGET_INCLUDE_DIRECTORIES(such PRIVATE src)
+    TARGET_LINK_LIBRARIES(such ${LIBDOGECOIN_NAME} libevent::core libevent::extra)
 
     IF(WITH_NET)
         ADD_EXECUTABLE(sendtx src/cli/sendtx.c)
+        TARGET_SOURCES(sendtx PRIVATE
+            src/cli/getoptions.c
+        )
         INSTALL(TARGETS sendtx RUNTIME)
-        TARGET_LINK_LIBRARIES(sendtx ${LIBDOGECOIN_NAME} m)
         TARGET_INCLUDE_DIRECTORIES(sendtx PRIVATE src)
+        TARGET_LINK_LIBRARIES(sendtx ${LIBDOGECOIN_NAME} libevent::core libevent::extra)
     ENDIF()
 ENDIF()

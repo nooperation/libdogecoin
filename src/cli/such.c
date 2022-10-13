@@ -27,7 +27,6 @@
 */
 
 #include <assert.h>
-#include <getopt.h>
 #ifdef HAVE_CONFIG_H
 #  include "src/libdogecoin-config.h"
 #endif
@@ -35,8 +34,11 @@
 #include <stdio.h>   /* printf */
 #include <stdlib.h>  /* atoi, malloc */
 #include <string.h>  /* strcpy */
-#include <unistd.h>
 #include <uthash/uthash.h>
+
+#ifndef _MSC_VER
+#include <unistd.h>
+#endif
 
 #include <dogecoin/address.h>
 #include <dogecoin/bip32.h>
@@ -50,6 +52,7 @@
 #include <dogecoin/tx.h>
 #include <dogecoin/utils.h>
 #include <dogecoin/wow.h>
+#include <dogecoin/getoptions.h>
 
 // ******************************** SUCH -C TRANSACTION MENU ********************************
 #ifdef WITH_NET
@@ -590,16 +593,20 @@ void main_menu() {
 // ******************************** END TRANSACTION MENU ********************************
 
 // ******************************** CLI INTERFACE ********************************
-static struct option long_options[] =
-    {
-        {"privkey", required_argument, NULL, 'p'},
-        {"pubkey", required_argument, NULL, 'k'},
-        {"derived_path", required_argument, NULL, 'm'},
-        {"command", required_argument, NULL, 'c'},
-        {"testnet", no_argument, NULL, 't'},
-        {"regtest", no_argument, NULL, 'r'},
-        {"version", no_argument, NULL, 'v'},
-        {NULL, 0, NULL, 0} };
+static struct program_option program_options[] =
+{
+    {'p', "privkey", true},
+    {'k', "pubkey", true},
+    {'m', "derived_path", true},
+    {'c', "command", true},
+    {'t', "testnet", false},
+    {'r', "regtest", false},
+    {'v', "version", false},
+    {'x', "", true},
+    {'s', "", true},
+    {'i', "", true},
+    {'h', "", true},
+};
 
 static void print_version()
     {
@@ -640,7 +647,10 @@ int main(int argc, char* argv[])
     const dogecoin_chainparams* chain = &dogecoin_chainparams_main;
 
     /* get arguments */
-    while ((opt = getopt_long_only(argc, argv, "h:i:s:x:p:k:m:c:trv", long_options, &long_index)) != -1) {
+    for (int argvIndex = 0; argvIndex < argc; ++argvIndex) {
+        char* optarg = NULL;
+        char opt = get_argument(argv, argc, &argvIndex, program_options, sizeof(program_options) / sizeof(program_options[0]), &optarg);
+
         switch (opt) {
                 case 'p':
                     pkey = optarg;

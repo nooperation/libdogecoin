@@ -40,6 +40,10 @@
 #include <dogecoin/mem.h>
 #include <dogecoin/utils.h>
 
+// MSVC has it's own implementation of strtok_r as strtok_s, not to be confused with the C11 strtok_s. It's a mess.
+#ifdef _MSC_VER
+#define strtok_r strtok_s
+#endif
 
 /**
  * @brief This function writes 4 big endian bytes.
