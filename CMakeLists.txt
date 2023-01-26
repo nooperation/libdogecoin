@@ -14,7 +14,7 @@ SET(WITH_NET TRUE CACHE BOOL "enable net functions")
 SET(RANDOM_DEVICE "/dev/urandom" CACHE STRING "set the device to read random data from")
 
 IF(WITH_NET)
-    FIND_PACKAGE(libevent CONFIG REQUIRED)
+    FIND_PACKAGE(Libevent CONFIG REQUIRED)
 ENDIF()
 
 MESSAGE(STATUS "")
