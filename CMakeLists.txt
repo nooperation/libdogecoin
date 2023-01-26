@@ -3,6 +3,7 @@ add_compile_options("$<$<C_COMPILER_ID:MSVC>:/utf-8>")
 
 SET(CMAKE_C_STANDARD 99)
 SET(CMAKE_C_STANDARD_REQUIRED TRUE)
+set(CMAKE_TOOLCHAIN_FILE "${CMAKE_CURRENT_SOURCE_DIR}/depends/vcpkg/scripts/buildsystems/vcpkg.cmake" CACHE STRING "Vcpkg toolchain file")
 
 SET(LIBDOGECOIN_NAME dogecoin)
 PROJECT(lib${LIBDOGECOIN_NAME} VERSION 0.1)
