@@ -16,6 +16,9 @@ SET(RANDOM_DEVICE "/dev/urandom" CACHE STRING "set the device to read random dat
 IF(WITH_NET)
     FIND_PACKAGE(Libevent CONFIG REQUIRED)
 ENDIF()
+IF(NOT WIN32)
+    FIND_LIBRARY(LIBUNISTRING_NAME NAMES unistring)
+ENDIF()
 
 MESSAGE(STATUS "")
 MESSAGE(STATUS "Options used to compile and link:")
@@ -153,6 +156,10 @@ INCLUDE_DIRECTORIES(
     src/secp256k1
     src/secp256k1/include
     ${GMP_INSTALL_DIR}/include)
+
+IF(NOT WIN32)
+    TARGET_LINK_LIBRARIES(${LIBDOGECOIN_NAME} ${LIBUNISTRING_NAME})
+ENDIF()
 
 IF(USE_TESTS)
     ADD_EXECUTABLE(tests)
