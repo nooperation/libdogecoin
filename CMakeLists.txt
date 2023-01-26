@@ -14,31 +14,7 @@ SET(WITH_NET TRUE CACHE BOOL "enable net functions")
 SET(RANDOM_DEVICE "/dev/urandom" CACHE STRING "set the device to read random data from")
 
 IF(WITH_NET)
-    IF(WIN32)
-        # build libevent
-        execute_process(COMMAND ${CMAKE_COMMAND} -E make_directory ${PROJECT_SOURCE_DIR}/src/libevent/build)
-        execute_process(COMMAND cmake .. 
-
-            -DEVENT__DISABLE_OPENSSL=ON
-            -DEVENT__DISABLE_SAMPLES=ON
-            -DEVENT__LIBRARY_TYPE=STATIC 
-            -DEVENT__DISABLE_TESTS=ON 
-            -DEVENT__DISABLE_THREAD_SUPPORT=OFF 
-            -DEVENT__DISABLE_MM_REPLACEMENT=ON 
-            -DEVENT__DISABLE_REGRESS=ON
-            WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/src/libevent/build)
-        execute_process(COMMAND cmake --build .
-            WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/src/libevent/build)
-        file(COPY "${PROJECT_SOURCE_DIR}/src/libevent/build/include" DESTINATION "${PROJECT_SOURCE_DIR}")
-        file(COPY "${PROJECT_SOURCE_DIR}/src/libevent/include" DESTINATION "${PROJECT_SOURCE_DIR}")
-        file(COPY "${PROJECT_SOURCE_DIR}/src/libevent/build/lib/${CMAKE_BUILD_TYPE}/event.lib" DESTINATION "${PROJECT_SOURCE_DIR}")
-        ###
-        FIND_LIBRARY(LIBEVENT NAMES event libevent HINTS "${CMAKE_PREFIX_PATH}" "${PROJECT_SOURCE_DIR}")
-        #FIND_LIBRARY(LIBEVENT_PTHREADS event_pthreads REQUIRED)
-        FIND_LIBRARY(WINPTHREADS NAMES pthreadVC2 pthreadwin32 pthreads pthread HINTS "${CMAKE_PREFIX_PATH};${CMAKE_PREFIX_PATH}/contrib/winpthreads/include/lib/x64/")
-    ELSE()
-        FIND_LIBRARY(LIBEVENT event REQUIRED)
-    ENDIF()
+    FIND_PACKAGE(libevent CONFIG REQUIRED)
 ENDIF()
 
 MESSAGE(STATUS "")
@@ -97,38 +73,18 @@ INSTALL(FILES
     include/dogecoin/utils.h
     include/dogecoin/vector.h
     include/dogecoin/wow.h
-    include/event2/buffer.h 
-    include/event2/bufferevent.h 
-    include/event2/bufferevent_compat.h 
-    include/event2/bufferevent_ssl.h 
-    include/event2/bufferevent_struct.h 
-    include/event2/buffer_compat.h 
-    include/event2/dns.h
-    include/event2/dns_compat.h 
-    include/event2/dns_struct.h 
-    include/event2/event.h 
-    include/event2/event_compat.h 
-    include/event2/event_struct.h 
-    include/event2/http.h 
-    include/event2/http_compat.h 
-    include/event2/http_struct.h 
-    include/event2/keyvalq_struct.h 
-    include/event2/listener.h 
-    include/event2/rpc.h 
-    include/event2/rpc_compat.h 
-    include/event2/rpc_struct.h 
-    include/event2/tag.h 
-    include/event2/tag_compat.h 
-    include/event2/thread.h 
-    include/event2/util.h 
-    include/event2/visibility.h 
-    include/event2/event-config.h
     include/qr/qr.h
     include/qr/png.h
+    DESTINATION include/dogecoin
+)
+
+IF(WIN32)
+INSTALL(FILES
     contrib/getopt/wingetopt.h
     contrib/wintime/wingettime.h
     DESTINATION include/dogecoin
 )
+ENDIF()
 
 TARGET_SOURCES(${LIBDOGECOIN_NAME} PRIVATE
     src/address.c
@@ -159,9 +115,13 @@ TARGET_SOURCES(${LIBDOGECOIN_NAME} PRIVATE
     src/qr.c
     src/png.c
     src/qrengine.c
-    contrib/getopt/wingetopt.c
-    contrib/wintime/wingettime.c
 )
+IF(WIN32)
+    TARGET_SOURCES(${LIBDOGECOIN_NAME} PRIVATE
+        contrib/getopt/wingetopt.c
+        contrib/wintime/wingettime.c
+    )
+ENDIF()
 
 FILE(GLOB SECP256K1 RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
     src/secp256k1/src/*.c)
@@ -225,6 +185,12 @@ IF(USE_TESTS)
         test/qr_tests.c)
     TARGET_LINK_LIBRARIES(tests ${LIBDOGECOIN_NAME} )
     ADD_TEST(NAME ${LIBDOGECOIN_NAME}_tests COMMAND tests)
+
+    FILE(GLOB_RECURSE WORDLISTS "${PROJECT_SOURCE_DIR}/test/wordlist/*.txt")
+    FOREACH(wordlist ${WORDLISTS})
+        GET_FILENAME_COMPONENT(wordlist_name ${wordlist} NAME)
+        CONFIGURE_FILE(${wordlist} "${CMAKE_CURRENT_BINARY_DIR}/test/wordlist/${wordlist_name}" COPYONLY)
+    ENDFOREACH()
 ENDIF()
 
 IF(WITH_NET)
@@ -238,7 +204,7 @@ IF(WITH_NET)
         src/protocol.c
     )
 
-    TARGET_LINK_LIBRARIES(${LIBDOGECOIN_NAME} ${LIBEVENT} ${LIBEVENT_PTHREADS} )
+    TARGET_LINK_LIBRARIES(${LIBDOGECOIN_NAME} libevent::core libevent::extra)
 
     IF(USE_TESTS)
         TARGET_SOURCES(tests PRIVATE

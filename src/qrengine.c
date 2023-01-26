@@ -8,9 +8,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "qr\qr.h"
-#include "qr\png.h"
-#include <dogecoin\qrengine.h>
+#include <dogecoin/qrengine.h>
+#include "qr/qr.h"
+#include "qr/png.h"
 
 
 
@@ -33,7 +33,7 @@ int stringToQrArray(const char* inString,uint8_t* qrcode)
 }
 
 //take in a QR byte array and output a formatted string with line breaks ready for console printing
-int outputQRStringFromQRBytes(uint8_t qrcode[],char* outstring)
+int outputQRStringFromQRBytes(const uint8_t* qrcode, char* outstring)
 {
     outstring[0] = '\0'; //make sure it starts with a nul so strcat knows what to do 
     int size = qrcodegen_getSize(qrcode);
